@@ -262,7 +262,7 @@ int main()
         cout << "\nBatch not found!\n";
     }
 
-    // Static function call
+    // Static member function call
     Produce::showTotalBatches();
 
     // Pointer to object
