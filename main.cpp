@@ -1,9 +1,20 @@
-
 #include <iostream>
+#include<fstream>
 #include <string>
 #include <limits>
-using namespace std;
+#include <cstring>
+#include <cstdio>
 
+using namespace std;
+// Structure for binary file records
+struct ProduceRecord
+{
+    int batchID;
+    char produceName[50];
+    float quantity;
+    float temperature;
+    char storageLocation[50];
+};
 class Produce
 {
 private:
@@ -17,6 +28,19 @@ private:
     static int totalBatches;
 
 public:
+  // Constructor
+  Produce()
+ {
+    batchID = 0;
+    quantity = 0;
+    temperature = 0;
+ }
+
+   // Destructor
+  ~Produce()
+ {
+    cout << "\nProduce object destroyed." << endl;
+ }
 
     // Function to add produce details
     void addProduce(int id)
@@ -67,6 +91,356 @@ public:
 
         cout << "\nBatch added successfully!\n";
     }
+    // Save produce details to file
+void saveToFile()
+{
+    ofstream file("produce.txt", ios::app);
+
+    if (!file)
+    {
+        cout << "Error opening file!" << endl;
+        return;
+    }
+
+    file << batchID << endl;
+    file << produceName << endl;
+    file << quantity << endl;
+    file << temperature << endl;
+    file << storageLocation << endl;
+
+    file.close();
+
+    cout << "Produce saved to file successfully!" << endl;
+}
+    // Read produce details from file
+void readFromFile()
+{
+    ifstream file("produce.txt");
+
+    if (!file)
+    {
+        cout << "Error opening file!" << endl;
+        return;
+    }
+
+    int id;
+    string name, location;
+    float qty, temp;
+
+    cout << "\n===== RECORDS FROM FILE =====\n";
+
+    while (file >> id)
+    {
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        getline(file, name);
+
+        file >> qty >> temp;
+
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        getline(file, location);
+
+        cout << "\nBatch ID: " << id << endl;
+        cout << "Produce Name: " << name << endl;
+        cout << "Quantity: " << qty << " kg" << endl;
+        cout << "Temperature: " << temp << " C" << endl;
+        cout << "Storage Location: " << location << endl;
+    }
+
+    file.close();
+}
+ // Save produce details in binary file
+void saveBinaryToFile()
+{
+    ofstream file("produce.dat", ios::binary | ios::app);
+
+    if (!file)
+    {
+        cout << "Error opening binary file!" << endl;
+        return;
+    }
+
+    ProduceRecord record{};
+
+    record.batchID = batchID;
+
+    strncpy(record.produceName, produceName.c_str(), 49);
+    record.quantity = quantity;
+    record.temperature = temperature;
+
+    strncpy(record.storageLocation, storageLocation.c_str(), 49);
+
+    file.write((char*)&record, sizeof(record));
+
+    file.close();
+
+    cout << "Binary record saved successfully!" << endl;
+}
+
+void readBinaryFromFile()
+{
+    ifstream file("produce.dat", ios::binary);
+
+    if (!file)
+    {
+        cout << "Error opening binary file!" << endl;
+        return;
+    }
+
+    ProduceRecord record;
+
+    cout << "\n===== RECORDS FROM BINARY FILE =====\n";
+
+    while (file.read((char*)&record, sizeof(record)))
+    {
+        cout << "\nBatch ID: " << record.batchID << endl;
+        cout << "Produce Name: " << record.produceName << endl;
+        cout << "Quantity: " << record.quantity << " kg" << endl;
+        cout << "Temperature: " << record.temperature << " C" << endl;
+        cout << "Storage Location: " << record.storageLocation << endl;
+    }
+
+    file.close();
+}
+
+
+void searchBinaryFile()
+{
+    ifstream file("produce.dat", ios::binary);
+
+    if (!file)
+    {
+        cout << "Error opening binary file!" << endl;
+        return;
+    }
+
+    int searchID;
+    cout << "\nEnter Batch ID to search: ";
+    cin >> searchID;
+
+    ProduceRecord record;
+    bool found = false;
+
+    while (file.read((char*)&record, sizeof(record)))
+    {
+        if (record.batchID == searchID)
+        {
+            cout << "\nRecord Found!\n";
+            cout << "Batch ID: " << record.batchID << endl;
+            cout << "Produce Name: " << record.produceName << endl;
+            cout << "Quantity: " << record.quantity << " kg" << endl;
+            cout << "Temperature: " << record.temperature << " C" << endl;
+            cout << "Storage Location: " << record.storageLocation << endl;
+
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        cout << "Record not found!" << endl;
+    }
+
+    file.close();
+}
+
+void directSearchBinaryFile()
+{
+    ifstream file("produce.dat", ios::binary);
+
+    if (!file)
+    {
+        cout << "Error opening binary file!" << endl;
+        return;
+    }
+
+    int position;
+    cout << "\nEnter record position (1, 2, 3...): ";
+    while (!(cin >> position) || position < 1)
+{
+    cout << "Invalid position! Enter a positive number: ";
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+    ProduceRecord record;
+
+    // Move directly to the selected record
+    file.seekg((position - 1) * sizeof(ProduceRecord));
+
+    if (file.read((char*)&record, sizeof(record)))
+    {
+        cout << "\nRecord Found!\n";
+        cout << "Batch ID: " << record.batchID << endl;
+        cout << "Produce Name: " << record.produceName << endl;
+        cout << "Quantity: " << record.quantity << " kg" << endl;
+        cout << "Temperature: " << record.temperature << " C" << endl;
+        cout << "Storage Location: " << record.storageLocation << endl;
+    }
+    else
+    {
+        cout << "Record not found!" << endl;
+    }
+
+    file.close();
+}
+
+void updateBinaryFile()
+{
+    fstream file("produce.dat",
+                 ios::in | ios::out | ios::binary);
+
+    if (!file)
+    {
+        cout << "Error opening binary file!" << endl;
+        return;
+    }
+
+    int position;
+
+    cout << "\nEnter record position to update: ";
+
+while (!(cin >> position) || position < 1)
+{
+    cout << "Invalid position! Enter a positive number: ";
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+    ProduceRecord record;
+
+    // Calculate the position of the record
+    streamoff location =
+        (position - 1) * sizeof(ProduceRecord);
+
+    file.seekg(location, ios::beg);
+
+    if (!file.read((char*)&record, sizeof(record)))
+    {
+        cout << "Record not found!" << endl;
+        file.close();
+        return;
+    }
+
+    cout << "\nCurrent Produce: "
+         << record.produceName << endl;
+
+    string name, storage;
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter new produce name: ";
+getline(cin, name);
+
+while (name.empty())
+{
+    cout << "Name cannot be empty. Enter again: ";
+    getline(cin, name);
+}
+
+    cout << "Enter new quantity: ";
+while (!(cin >> record.quantity) || record.quantity <= 0)
+{
+    cout << "Invalid quantity! Enter again: ";
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+cout << "Enter new temperature: ";
+while (!(cin >> record.temperature) ||
+       record.temperature < -50 || record.temperature > 50)
+{
+    cout << "Invalid temperature! Enter between -50 and 50: ";
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter new storage location: ";
+    getline(cin, storage);
+
+    // Copy updated details
+    strncpy(record.produceName, name.c_str(), 49);
+    record.produceName[49] = '\0';
+
+    strncpy(record.storageLocation, storage.c_str(), 49);
+    record.storageLocation[49] = '\0';
+
+    // Move writing pointer to the same record
+    file.seekp(location, ios::beg);
+
+    file.write((char*)&record, sizeof(record));
+
+    cout << "\nBinary record updated successfully!" << endl;
+
+    file.close();
+}
+void deleteBinaryRecord()
+{
+    ifstream in("produce.dat", ios::binary);
+    ofstream out("temp.dat", ios::binary);
+
+    if (!in || !out)
+    {
+        cout << "Error opening file!" << endl;
+        return;
+    }
+
+    int position;
+    cout << "\nEnter record position to delete: ";
+
+    while (!(cin >> position) || position < 1)
+    {
+        cout << "Invalid position! Enter again: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    ProduceRecord record;
+    int count = 0;
+    bool found = false;
+
+    while (in.read((char*)&record, sizeof(record)))
+    {
+        count++;
+
+        if (count == position)
+        {
+            found = true;
+            continue;
+        }
+
+        out.write((char*)&record, sizeof(record));
+    }
+
+    in.close();
+    out.close();
+
+    if (!found)
+    {
+        cout << "Record not found!" << endl;
+        std::remove("temp.dat");
+        return;
+    }
+
+    if (std::remove("produce.dat") != 0)
+{
+    cout << "Error deleting original file!" << endl;
+    std::remove("temp.dat");
+    return;
+}
+
+if (std::rename("temp.dat", "produce.dat") != 0)
+{
+    cout << "Error renaming temporary file!" << endl;
+    return;
+}
+    cout << "Record deleted successfully!" << endl;
+}
+
 
     // Getter function
     int getBatchID() const
@@ -215,8 +589,21 @@ int main()
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         batches[i].addProduce(id);
+        // save batch details to file
+        batches[i].saveToFile();
+        // save batch details to binary file
+        batches[i].saveBinaryToFile();
     }
 
+       // Read records from file
+batches[0].readFromFile();
+batches[0].readBinaryFromFile();
+batches[0].searchBinaryFile();
+batches[0].directSearchBinaryFile();
+batches[0].updateBinaryFile();
+batches[0].readBinaryFromFile();
+batches[0].deleteBinaryRecord();
+batches[0].readBinaryFromFile();
     // Display all batches
     cout << "\n========== ALL BATCHES ==========\n";
 
@@ -364,6 +751,9 @@ if (n == 0)
 {
     cout << "No batches available.\n";
 }
-
+if (n > 0)
+{
+    batches[0].readBinaryFromFile();
+}
     return 0;
 }
